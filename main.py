@@ -1,5 +1,7 @@
 import sys
 
+from storage import data_store
+
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
@@ -12,6 +14,7 @@ from PySide6.QtWidgets import (
 
 from ui.home_page import HomePage
 from ui.live_grip_page import LiveGripPage
+from ui.analytics_page import AnalyticsPage
 
 
 class Dashboard(QWidget):
@@ -37,15 +40,14 @@ class Dashboard(QWidget):
         self.home_page = HomePage()
         self.live_page = LiveGripPage()
 
-        # Temporary pages
-        self.analytics_page = QWidget()
-        self.device_page = QWidget()
+        self.analytics_page = AnalyticsPage()
+
+        # Temporary page
         self.settings_page = QWidget()
 
         self.pages.addWidget(self.home_page)
         self.pages.addWidget(self.live_page)
         self.pages.addWidget(self.analytics_page)
-        self.pages.addWidget(self.device_page)
         self.pages.addWidget(self.settings_page)
 
         # ---------------- NAVIGATION ----------------
@@ -57,14 +59,12 @@ class Dashboard(QWidget):
         self.home_button = QPushButton("⌂\nHome")
         self.live_button = QPushButton("◉\nLive Grip")
         self.analytics_button = QPushButton("▥\nAnalytics")
-        self.device_button = QPushButton("▯\nDevice")
         self.settings_button = QPushButton("⚙\nSettings")
 
         self.nav_buttons = [
             self.home_button,
             self.live_button,
             self.analytics_button,
-            self.device_button,
             self.settings_button,
         ]
 
@@ -93,12 +93,8 @@ class Dashboard(QWidget):
             lambda: self.change_page(2)
         )
 
-        self.device_button.clicked.connect(
-            lambda: self.change_page(3)
-        )
-
         self.settings_button.clicked.connect(
-            lambda: self.change_page(4)
+            lambda: self.change_page(3)
         )
 
         # ---------------- DIVIDER ----------------
@@ -129,6 +125,10 @@ class Dashboard(QWidget):
     def change_page(self, page_number):
 
         self.pages.setCurrentIndex(page_number)
+
+        # Reload the saved data whenever Analytics is opened
+        if self.pages.currentWidget() is self.analytics_page:
+            self.analytics_page.load_data()
 
         # Reset all navigation buttons
         for button in self.nav_buttons:
@@ -165,6 +165,14 @@ class Dashboard(QWidget):
                 background-color: #1c1c1e;
             }
         """)
+
+
+# Check for the data file first: make it if it's missing,
+# otherwise the existing one gets used
+if data_store.setup_database():
+    print("No data file found, created a new one")
+else:
+    print("Found existing data file")
 
 
 app = QApplication(sys.argv)
